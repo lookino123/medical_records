@@ -1,90 +1,92 @@
 # Century Health | ML Engineer Take Home Assignment
 
-# Overview
-
-For this assignment, you will receive a small, synthetic dataset of unstructured clinical notes. Your goal is to build a quick pipeline that:
-
-1. **Extracts** specific clinical variables from the notes.
-2. **Evaluates** the quality of the extraction.
-3. **Outputs** a structured representation (e.g., JSON) with those key variables.
-
-**Time expectation:** 2 hours 
-
 # Data
+the original notes from the physicians are on notes.xlsx
+structured outputs are in final.csv
+all intermediate checkpoints are in the folder named 'checkpoints'. They are the intermediate steps, saved in case of a Jupyter kernel crash.
 
-[The linked excel file](https://docs.google.com/spreadsheets/d/1YdWhQwFehuXBveSaLEqw2QoQ3XEwSwrv/edit?usp=sharing&ouid=106734752345243548500&rtpof=true&sd=true) contains 20 unstructured clinical notes about patients with Type 2 Diabetes. Each note might contain:
+# Strategy
+Load data in a pandas dataset, dump it in a csv checkpoint at every step.
+Define extractors and extract all the structured demographic data like MR, Name, Age, Gender 
+Define the fields that need to be extracted from the unstructured text and define the JSON structure expected of the LLM
+Use LLM (in this case 2 different ones) to fill in the reuqeste fields
+Compare results and optimize.
 
-- Demographics (fictitious age, gender).
-- Key medications and dosages (e.g., metformin, insulin).
-- Relevant labs (e.g., A1C levels).
-- Brief mention of comorbidities (e.g., hypertension).
-- Some “noise” text that isn’t relevant.
+# Code
+The code is in CH.ipynb. The need for multiple files/modules is reduced by the fact that Jupyter notebooks are in sections that clearly separate the code in logical blocks.
 
-# Assignment Instructions
+# Extraction of demographic data
+I have chosen RegEx with fuzzy logic that allows for typos.
+The code is case-insensitive.
+The extraction process is not sensitive to new lines (\n) but there is a data cleanup step that is.This cleanup is optional and can be omitted in case new lines are unreliable.
 
-For speed and simplicity, write all your code in a Jupyter Notebook to show inputs and outputs. If easier to organize, feel free to write functions and prompts in a separate file to load in, but it is not required.
+It is also possible to use NER and LLMs to extract this data. NER and LLMs are more powerful tools than RegEx and work well when the data is less structured. The complexity of NER and LLM comes at a cost that in this case does not seem justified. This decision is affected by the quality of the data.
+Better data => smaller model.
 
-### Step 1: Extraction
+# Extraction of medical data
 
-1. Methodology 
-    1. Identify which methodology you will use to solve this problem. Some examples include:
-        1. Named Entity Recognition (NER)
-        2. Question/ Answer
-        3. Rule-Based Extraction
-    2. For your methodology of choice, please explain why you chose this particular approach (or combination of approaches) and pros/ cons of different approaches.
-2. Technical Setup 
-    1. Based on your choice of methodology above, define your technical setup:
-        1. Named Entity Recognition (NER)
-            1. Use `spacy` and download a biomedical NLP model
-            2. Fine-tune for extracting custom entities (e.g., medications, conditions, procedures) using a custom pipeline
-        2. Question/ Answer
-            1. [This linked OpenAI API key](https://drive.google.com/file/d/1CUa4NiCqicPilwjFkpVxR-6Cw9HtbrkV/view?usp=sharing) has has access to `4o-mini` and $5 in API calls. It should be sufficient for this exercise, but let us know if you do need access to more.
-            2. Write one or more prompts in a way that the LLM outputs *only the relevant structured information*.
-            3. For instance, you may want the LLM to return a JSON with fields like:
-            
-            ```jsx
-            {
-              "patient_name": "",
-              "age": "",
-              "disease": "",
-              "medications": [],
-              "lab_results": {},
-              "symptoms": []
-            }
-            ```
-            
-            1. Demonstrate your *prompt engineering* approach. Example: few-shot examples, instructions to “only output JSON,” instructions to avoid extraneous text, etc.
-        3. Rule-Based Extraction
-            1. Define the RegEx needed to extract the variables of interest. 
-            2. Note: You may want to incorporate RegEx to extract variables that NER or Question/ Answer have a tough time.
-3. Process
-    1. Named Entity Recognition (NER)
-        1. Process NER model on your the clinical notes, extracting appropriate entities such as Name, Gender, Diagnoses, Medications, etc.
-        2. Iterate on fine-tuning your NER model to bring in at least one custom entity, if needed.
-        3. (Optional) Extract confidence scores for each variable extracted.
-    2. Question/ Answer 
-        1. Use LangChain, LlamaIndex, or a custom framework to demonstrate how to structure the prompts and calls.
-        2. Show your pipeline from start to finish:
-            1. Load or store your prompts using LangChain’s prompt templates, LlamaIndex’s prompt modules, or your own framework.
-            2. Send requests to the LLM (OpenAI or other) through the chosen framework (e.g., `langchain.llms.OpenAI` or LlamaIndex’s `LLMPredictor`).
-    3. Rule-Based Extraction
-        1. Run RegEx on the clinical notes, extracting variables of interest.
+The medical data is not structured and cannot be easily extracted with RegEx.
 
-### Step 2: Evaluation
+Why not spacy?
+Spacy pipelines are well established, fast and efficient. Historically they were rule-based and relied heavily on dictionaries or manually mapped features. Recently they have been adapted to include BERT transformers, that offer more accuracy, reliability and reduce reliance on dictionaries (at the cost of needing a GPU).
 
-1. Evaluation
-    - **Structural evaluation**: Check if the returned text is valid JSON (or a valid structured format). Demonstrate how you handle parsing errors or invalid responses.
-    - **Qualitative evaluation**: Manually or programmatically assess whether the extracted fields are correct. You can do one or more of the following:
-        - Use a second LLM prompt to “judge” the correctness.
-        - Or compare it against a simple “ground truth” you embed in your code. (Since this is synthetic data, you have a known correct answer.)
+What's difficult about the spacy pipeline? Support on medspacy is patchy at best. scispacy is not much better. The rule-based models (CPU) require a dictionary or a set of rules (can be done manually on a limited domain, but not elegant nor very scalable). The BERT transformers available seem to have conflicts with certain versions torch and CUDA.
 
-### Step 3: Output
+In short: great tool, requires a non-trivial setup. Ideal setup (technically complex) spacy + ClinicalBERT.
 
-1. Output
-    - Return or print a final structured representation for each note (e.g., a Pandas DataFrame or a list of JSON objects).
-    - (Optional) Briefly show how the structured data might be summarized. For example, “Generate a one-sentence summary for each patient highlighting their key risk factors.”
+So I went the GPT way. GPT models (decoder) are designed to complete text, so they are not as specialized as BERT (encoder) at understanding meaning. However, they can do an excellent job and even if they are a blunt tool, they are a powerful and versatile one that reuires minimal setup.
 
-### Step 4: Summary
+I used 2 different LLMs.
+
+Each Langchain pipeline has 3 parts: the prompt structure with JSON schema, the generation and the JSON validation.
+
+json_schema = [
+    ["disease", "The disease the patient is suffering from"],
+    ["symptoms", "The symptoms the patient is experiencing"],
+    ["lab_results", "The results of the lab tests"],
+    ["current_medication", "The medication the patient is currently taking"],
+    ["current_dosage", "The dosage of the current medication, just the dosage, not the name"],
+    ["current_frequency", "The frequency of  current medication, just the frequency, not the name"],
+    ["prescribed_medication", "The medication prescribed"],
+    ["prescribed_dosage", "The dosage of the prescribed medication"],
+    ["prescribed_frequency", "The frequency of the prescribed medication"],
+]
+
+This (almost) identical pipeline was run through ChatGPT-4o-mini (online) and though Qwen/Qwen2.5-32B-Instruct-GPTQ-Int4 (on metal on a local GPU)
+
+I'd like to share some of the thought process behind benchmarking two different LLMs and the results:
+
+Qwen/Qwen2.5-32B-Instruct-GPTQ-Int4 is a mid-sized model, it's a 32b, in its 4bit-quantized version it runs on 20Gb or VRAM. This means it is compatible with workstation hardware.
+
+* Advantages of Qwen-32b
+
+From a business standpoint this has two advantages:
+1. Fine-tuning and LORA is possible and cheaper on smaller open source models. Fime-tuning can also create a techological moat
+2. Regulations (national/international) might not allow the use of a US model / public model to process medical records
+
+There are cases where the ability to run a model locally is valuable.
+
+* Disadvantages of Qwen-32b
+
+The difference between a naked model from HuggingFace and a service like ChatGPT is that the naked model is not a finished products and the layers of verification and output conditioning we are used to are not there.
+More specifically, Qwen is subject to repetition and more effort has to be put in cleaning up and verifying the output.
+A second obvious drawback is that, although the required infrastructure is cheaper, it still has to be managed nevertheless.
+
+# Evaluation
+
+I have not built a full verifier. However, since i have extracted the same data from 2 different LLMs, we do have a frame of reference and results can be assessed manually. The output with the comparison between the files in final.csv
+
+How do the two models do:
+
+
+# How to improve the code
+
+Load records to the LLM in batches (for speed)
+Deploy Qwen over FastApi instead of the workstation of the data-scientist (practical, scalable)
+Run a typo check on inputs.
+Build a ClinicalBERT pipeline with spacy or Langchain as a substitute or verifier of the LLM.
+
+# Step 4: Summary
 
 1. Short Summary
     - Summarize your approach:
