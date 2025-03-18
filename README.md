@@ -1,8 +1,9 @@
 # Century Health | ML Engineer Take Home Assignment
 
 # Data
-the original notes from the physicians are on notes.xlsx
-structured outputs are in final.csv
+the original notes from the physicians are on original_data.xlsx
+Otputs are in final_results.csv
+
 all intermediate checkpoints are in the folder named 'checkpoints'. They are the intermediate steps, saved in case of a Jupyter kernel crash.
 
 # Strategy
@@ -74,13 +75,11 @@ A second obvious drawback is that, although the required infrastructure is cheap
 
 # Evaluation
 
-I have not built a full verifier. However, since i have extracted the same data from 2 different LLMs, we do have a frame of reference and results can be assessed manually. The output with the comparison between the files in final.csv
+I have not built a full verifier. However, since i have extracted the same data from 2 different LLMs, we do have a frame of reference and results can be assessed manually. The output with the comparison between the files in final_comparison.xlxs (some colums that are not relevant have been omitted)
 
 How do the two models do:
 In general Qwen massively outperformed ChatGPT, especially on the medication side. More specifically, it had less hallucinations, it was more able to ignore irrelevant information, missed less medications and was better able to distinguish between medications the patients were alrady one and new prescriptions.
 This is not suprising since the version of qwen used is optimized to follow instructions, when chatgpt is optimized for text generation.
-
-The scores are in the final.xlxs spreadsheet.
 
 # How to improve the code
 
