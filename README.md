@@ -77,7 +77,10 @@ A second obvious drawback is that, although the required infrastructure is cheap
 I have not built a full verifier. However, since i have extracted the same data from 2 different LLMs, we do have a frame of reference and results can be assessed manually. The output with the comparison between the files in final.csv
 
 How do the two models do:
+In general Qwen massively outperformed ChatGPT, especially on the medication side. More specifically, it had less hallucinations, it was more able to ignore irrelevant information, missed less medications and was better able to distinguish between medications the patients were alrady one and new prescriptions.
+This is not suprising since the version of qwen used is optimized to follow instructions, when chatgpt is optimized for text generation.
 
+The scores are in the final.xlxs spreadsheet.
 
 # How to improve the code
 
@@ -86,47 +89,3 @@ Deploy Qwen over FastApi instead of the workstation of the data-scientist (pract
 Run a typo check on inputs.
 Build a ClinicalBERT pipeline with spacy or Langchain as a substitute or verifier of the LLM.
 
-# Step 4: Summary
-
-1. Short Summary
-    - Summarize your approach:
-        - How you arrived at your methodology and details.
-        - How you are dealing with any “hallucinations” or extraneous text.
-        - Why you chose the evaluation strategy you used.
-    - Feel free to do this in the Jupyter notebook itself or a separate Markdown file.
-
-# Rubric
-
-We will be reviewing and assessing the following components:
-
-- **Ability to translate business needs to an LLM problem**
-    - Do you understand which clinical variables matter?
-    - Are you structuring the output in a way that’s actually usable downstream?
-- **Model Setup**
-    - For NER, are you using the correct model and fine tuning it if needed
-    - For Q&A, are you writing clear instructions to the model?
-    - Do you handle unexpected LLM outputs or attempt to mitigate hallucinations?
-- **Evaluation**
-    - Do you implement a simple correctness check (structure + content)?
-    - Can you explain how they would scale or improve the evaluation?
-- **Code Quality & Reasoning**
-    - Even if it’s a quick assignment, is the code organized?
-    - Do they comment on potential pitfalls or limitations?
-
-# Submission
-
-Here are instructions for submitting the assignment:
-
-- Upload your Jupyter notebook, associated files, and documentation to a Github repository
-- Send an e-mail to [sanjay@century.health](mailto:sanjay@century.health) with the following information:
-    - Title: “Century Health Technical Task - <First Name Last Name> - Submission”
-    - A link to the repository
-    - How many hours it took to complete the assignment end to end
-    - Which AI tools did you use to help (e.g., ChatGPT, Cursor, Perplexity, etc.)
-
-# Tips for Completing this Assignment
-
-- **Leverage AI tools**: We encourage you to use AI-powered code generation tools like ChatGPT or Cursor to speed up development and improve clarity. At Century Health, we actively use these tools to enhance our workflows.
-- **Simplify when needed**: If you encounter ambiguities, make reasonable assumptions that simplify rather than overcomplicate the problem and explain your reasoning. We're more interested in your thought process—how you decide which variables to extract, how you handle edge cases, and why you choose specific tools—rather than a single "correct" answer.
-- **Timeboxing matters**: This assignment is designed to be completed in **under 2 hours**. If you find yourself far exceeding that, submit what you have along with a brief explanation of what you would improve with more time. We’re more interested in your approach than a fully polished solution.
-- **Ask questions**: If anything is unclear, don’t hesitate to reach out to [sanjay@century.health](mailto:sanjay@century.health).
