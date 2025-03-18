@@ -2,9 +2,9 @@
 
 # Data
 the original notes from the physicians are on original_data.xlsx
-Otputs are in final_results.csv
+Outputs are in final_results.csv
 
-all intermediate checkpoints are in the folder named 'checkpoints'. They are the intermediate steps, saved in case of a Jupyter kernel crash.
+All intermediate checkpoints are in the folder named 'checkpoints'. They are the intermediate steps, saved in case of a Jupyter kernel crash.
 
 # Strategy
 Load data in a pandas dataset, dump it in a csv checkpoint at every step.
